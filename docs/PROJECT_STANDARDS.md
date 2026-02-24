@@ -1,6 +1,6 @@
 # Project Standards
 
-**Version**: 1.3.0  
+**Version**: 1.5.0  
 **Status**: Active  
 **Last Updated**: 2026-02-24
 
@@ -55,7 +55,8 @@ Imports must follow a **top-down** direction only:
 
 ### 2.2 Formatting & Linting
 *   Run `dart format .` before every commit.
-*   **Zero-Warning Policy**: `dart analyze` must report 0 issues before any push.
+*   **Zero-Warning Policy**: `flutter analyze --fatal-infos --fatal-warnings` must report 0 issues.
+*   **Strict Mode**: Any info, warning, or lint violation is considered a build-blocking error.
 
 ### 2.3 Import Style
 *   All imports within `lib/` must use **absolute `package:` imports**.
@@ -113,14 +114,15 @@ Any change to weights or thresholds requires:
 ### 6.1 Requirements
 *   Every public Service method must have Unit Tests.
 *   **Coverage**: Critical service logic must maintain **>80% coverage**.
-*   **CI Gate**: PRs must fail automatically if coverage drops below the 80% threshold for services.
+*   **Quality Gate**: Use `./test_agent.sh` for local validation before pushing.
 
 ---
 
 ### 6.2 Final Verification (Smoke Test)
 *   **Tests are not enough**: Passing unit and widget tests is a baseline, but not a guarantee of a working app.
 *   **Mandatory Run**: After all tests pass, the application must be successfully built and run (Hot Restart) to verify there are no runtime crashes or initialization errors.
-*   **Sign-off**: A feature is only considered "Done" when it passes tests AND a manual/automated smoke test of the running UI.
+*   **Automated Smoke Test**: Run `test/smoke_test.dart` to verify app initialization and basic navigation.
+*   **Sign-off**: A feature is only considered "Done" when it passes tests AND the automated smoke test suite.
 
 ---
 
@@ -128,3 +130,16 @@ Any change to weights or thresholds requires:
 *   **Conventional Commits**: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`.
 *   **PR Review**: Description must state if an "ENGINE CHANGE" is included.
 *   Reviewer Checklist: Verify dependency flow and sync-purity of services.
+
+---
+
+## 8. Quality Gate Enforcement (Tooling)
+
+### 8.1 `./test_agent.sh`
+This script is the project's gatekeeper. It performs the following checks in order:
+1.  **Static Analysis**: Runs `flutter analyze --fatal-infos --fatal-warnings`.
+2.  **Audit**: Discovers all `*_test.dart` files and ensures they are accounted for.
+3.  **Test Run**: Executes the entire test suite (Unit, Widget, Global, Smoke).
+4.  **Integrity**: Blocks the process if any test file was skipped or failed.
+
+**Mandatory Usage**: Every developer MUST run `./test_agent.sh` before pushing code.
