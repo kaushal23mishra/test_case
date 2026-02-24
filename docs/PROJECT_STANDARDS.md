@@ -57,6 +57,12 @@ Imports must follow a **top-down** direction only:
 *   Run `dart format .` before every commit.
 *   **Zero-Warning Policy**: `flutter analyze --fatal-infos --fatal-warnings` must report 0 issues.
 *   **Strict Mode**: Any info, warning, or lint violation is considered a build-blocking error.
+*   **Analyzer Configuration**:
+    *   `strict-casts: true`: Prevents implicit downcasts from `dynamic`.
+    *   `strict-inference: true`: Forces explicit types where inference might fail or be too broad.
+    *   `strict-raw-types: true`: Generic types must never be raw (e.g., use `List<String>` instead of `List`).
+    *   `always_use_package_imports: error`: Forces `package:project_name/` style; no relative imports.
+    *   `unawaited_futures: true`: All futures must be awaited or explicitly marked (e.g., using `unawaited()`).
 
 ### 2.3 Import Style
 *   All imports within `lib/` must use **absolute `package:` imports**.
