@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../controllers/trading_controller.dart';
-import '../../models/trading_parameter.dart';
+import 'package:test_case/core/config/engine_config.dart';
+import 'package:test_case/controllers/trading_controller.dart';
+import 'package:test_case/models/trading_parameter.dart';
 
 class TradingDashboard extends ConsumerWidget {
   const TradingDashboard({super.key});
@@ -48,9 +49,11 @@ class TradingDashboard extends ConsumerWidget {
   Widget _buildScoreCard(TradingState state) {
     final score = state.totalScore;
     final decision = state.decision;
-    Color statusColor = score >= 12
+    
+    // Using Centralized Thresholds for Colors
+    Color statusColor = score >= EngineConfig.gradeAThreshold
         ? Colors.greenAccent
-        : (score >= 8 ? Colors.orangeAccent : Colors.redAccent);
+        : (score >= EngineConfig.gradeBThreshold ? Colors.orangeAccent : Colors.redAccent);
 
     return Container(
       width: double.infinity,
@@ -80,7 +83,7 @@ class TradingDashboard extends ConsumerWidget {
               style: TextStyle(
                   color: Colors.white70, fontSize: 12, letterSpacing: 1.5)),
           const SizedBox(height: 8),
-          Text('$score / 14',
+          Text('$score / ${EngineConfig.totalPossibleScore}',
               style: TextStyle(
                   color: statusColor,
                   fontSize: 42,
@@ -110,7 +113,7 @@ class TradingDashboard extends ConsumerWidget {
   Widget _buildCheckItem(TradingParameter parameter, TradingController controller) {
     return Card(
       color: const Color(0xFF1E293B),
-      key: ValueKey(parameter.title), // Added Key for testing
+      key: ValueKey(parameter.title),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.only(bottom: 8),
       child: CheckboxListTile(

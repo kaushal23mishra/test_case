@@ -1,7 +1,8 @@
 # Trade Evaluation Specification
 
-**Version**: 1.0.0  
+**Engine Version**: 1.0.0 (Project v1.3.0)  
 **Status**: Active  
+**Effective From**: 2026-02-24  
 **Domain**: Probability Scoring Engine
 
 ---
@@ -10,70 +11,71 @@
 
 ### 1.1 Rule-Based Design
 *   All trade decisions must be rule-driven and deterministic.
-*   No emotional, discretionary, or UI-triggered hidden logic.
+*   **Determinism Lock**: Evaluation must not depend on system time, random values, or external mutable state. All data must be passed as inputs.
+*   **Non-Goal**: The engine does not predict markets. It evaluates rule conformance only.
 
 ### 1.2 Deterministic Output
-The same set of input parameters must **always** produce the same:
+Evaluation produces a structured, **serializable** result:
 *   Grade Classification (A, B, or C)
 *   Probability Score (0-100%)
-*   Risk Rating
+*   Decision Payload (JSON-compatible)
 
 ---
 
 ## 2. Evaluation Model
 
-### 2.1 Parameter Categories
-Evaluation parameters are strictly grouped into:
-*   **Trend**: Market structure and EMA alignment.
-*   **Momentum**: RSI, volume, and trigger patterns.
-*   **Volatility**: ATR and market environment.
-*   **Risk Management**: RR ratios and position sizing.
-*   **Market Context**: News and session timing.
+### 2.1 Configuration Centralization
+*   All weights and thresholds are strictly defined in `lib/core/config/engine_config.dart`.
+*   **Dynamic Total**: The maximum possible score is calculated at runtime as the sum of all parameter weights.
 
 ### 2.2 Hard Filters (Pre-Evaluation)
-These overrides trigger before the scoring engine:
-*   **Risk-Reward Filter**: If RR < 1:1 → Auto-Grade C.
-*   **News Filter**: High-impact news active → System Rejection.
+*   Must be checked first.
+*   **Short-Circuit**: If a hard filter is triggered, the evaluation stops immediately. Normalized scoring is bypassed.
 
 ---
 
 ## 3. Scoring & Graduation
 
-### 3.1 Raw Score Normalization
-*   Raw Score Range: 0 - 14 points.
-*   Percentage Formula: `(raw_score / 14) * 100` (rounded to 1 decimal).
-
-### 3.2 Decision Tiers
-| Grade | Status | Score Range | Executive Strategy |
-|-------|--------|-------------|--------------------|
-| **Grade A** | High Prob | 12 - 14 | **Aggressive**: Full Position Size. |
-| **Grade B** | Med Prob | 8 - 11 | **Conservative**: 50% Position Size. |
-| **Grade C** | Low Prob | 0 - 7 | **Avoid**: Monitoring only. |
+### 3.1 Decision Tiers
+| Grade | Score Range | Probability Range | Executive Strategy | Color |
+|-------|-------------|-------------------|--------------------|-------|
+| **Grade A** | 12 - 14 | 85.7% – 100% | **Aggressive**: Full Size | Green |
+| **Grade B** | 8 - 11 | 57.1% – 78.6% | **Conservative**: Half Size | Orange |
+| **Grade C** | 0 - 7 | 0.0% – 50.0% | **Avoid**: Observation only | Red |
 
 ---
 
 ## 4. Operational Requirements
 
-### 4.1 Numeric Precision
-*   Use `double` for all technical indicators.
-*   Avoid `==` comparisons for price data; use threshold-based logic.
+### 4.1 Traceability (Log Isolation)
+*   **Services** calculate; **Controllers** log.
+*   **Info Level**: Final decision only.
+*   **Debug/Fine Level**: Full JSON snapshot of the evaluation for audit.
 
-### 4.2 Traceability (Logging)
-Each evaluation event must log:
-*   State of every individual parameter (checked/unchecked).
-*   Category-wise sub-scores.
-*   Hard filter audit results.
-*   Decision timestamp and final Grade.
-
-### 4.3 Policy: No Hidden Weights
-*   All weights must be explicitly defined in the source code.
-*   Weight adjustments are treated as "Logic Changes" and require a version bump and backtest documentation.
+### 4.2 Change Management
+Any modification to logic requires:
+*   Engine version increment.
+*   "ENGINE CHANGE" tag in `CHANGELOG.md`.
+*   Update to `lib/core/config/engine_config.dart`.
 
 ---
 
-## 5. Sample Evaluation Flow
-1. **Filter Audit**: Check Hard Filters (RR, News).
-2. **Category Assessment**: Score Technicals, Risk, and Context.
-3. **Normalization**: Calculate final percentage and Grade.
-4. **Log Event**: Store evaluation snapshot for post-trade analysis.
-5. **Output**: Deliver Decision to UI.
+## 5. Worked Example (Serializable Output)
+**JSON Snapshot:**
+```json
+{
+  "rawScore": 14,
+  "percentage": 100.0,
+  "grade": "Grade A",
+  "decision": "High Probability (Trade Allowed)",
+  "parameterSnapshots": {
+    "Trend Alignment": true,
+    "Support/Resistance": true,
+    "Volume Confirmation": true,
+    "Risk-Reward Ratio": true,
+    "Position Sizing": true,
+    "Volatility (ATR)": true,
+    "No Impact News": true
+  }
+}
+```

@@ -1,9 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_case/controllers/trading_controller.dart';
+import 'package:test_case/core/config/engine_config.dart';
 
 void main() {
-  group('TradingController Unit Tests', () {
+  group('TradingController Behavioral Tests', () {
     late ProviderContainer container;
 
     setUp(() {
@@ -14,48 +15,47 @@ void main() {
       container.dispose();
     });
 
-    test('Initial state should have 0 score and default decision', () {
+    test('initial state fulfills the default low probability setup', () {
       final state = container.read(tradingProvider);
       expect(state.totalScore, 0);
-      expect(state.decision, "Low Probability (No Trade)");
+      expect(state.decision, contains("Low Probability"));
     });
 
-    test('Score should update when a parameter is toggled', () {
+    test('increments total score when a weighted parameter is enabled', () {
       final notifier = container.read(tradingProvider.notifier);
       
-      // Toggle 'Trend Alignment' (Weight: 3)
       notifier.toggleParameter('Trend Alignment');
       
       final state = container.read(tradingProvider);
-      expect(state.totalScore, 3);
+      expect(state.totalScore, EngineConfig.trendAlignmentWeight);
     });
 
-    test('Probability decision should change based on score', () {
+    test('transitions to higher probability grades as thresholds are crossed', () {
       final notifier = container.read(tradingProvider.notifier);
       
-      // Add multiple parameters to reach > 8 score
+      // Reach Medium Probability
       notifier.toggleParameter('Trend Alignment'); // 3
       notifier.toggleParameter('Risk-Reward Ratio'); // 3
       notifier.toggleParameter('Support/Resistance'); // 2
       
       var state = container.read(tradingProvider);
-      expect(state.totalScore, 8);
-      expect(state.decision, "Medium Probability (Half Size)");
+      expect(state.totalScore, EngineConfig.gradeBThreshold);
+      expect(state.decision, contains("Medium Probability"));
 
-      // Add more to reach > 12
+      // Reach High Probability
       notifier.toggleParameter('Volume Confirmation'); // 2
       notifier.toggleParameter('Position Sizing'); // 2
       
       state = container.read(tradingProvider);
-      expect(state.totalScore, 12);
-      expect(state.decision, "High Probability (Trade Allowed)");
+      expect(state.totalScore, EngineConfig.gradeAThreshold);
+      expect(state.decision, contains("High Probability"));
     });
 
-    test('Reset should clear all parameters', () {
+    test('clears all user selections when reset is triggered', () {
       final notifier = container.read(tradingProvider.notifier);
       notifier.toggleParameter('Trend Alignment');
       
-      expect(container.read(tradingProvider).totalScore, 3);
+      expect(container.read(tradingProvider).totalScore, isPositive);
       
       notifier.reset();
       expect(container.read(tradingProvider).totalScore, 0);

@@ -1,6 +1,6 @@
 # Project Standards
 
-**Version**: 1.0.0  
+**Version**: 1.3.0  
 **Status**: Active  
 **Last Updated**: 2026-02-24
 
@@ -16,42 +16,54 @@
 ### 1.2 Layered Structure
 ```
 lib/
- ├── core/              (constants, enums, shared utilities, extensions)
- ├── models/            (immutable data structures and domain models)
+ ├── core/              (constants, enums, shared utilities, config)
+ │    ├── constants/     (app-wide defaults like kDoubleTolerance)
+ │    ├── config/        (engine weights, thresholds, scoring rules)
+ │    └── utils/         (logging, formatting, validators)
+ ├── models/            (immutable data structures)
  ├── services/          (pure business logic, probability engine)
+ ├── repositories/      (async data sources, persistence, API)
  ├── controllers/       (Riverpod state management layer)
  └── ui/                (screens, widgets, themes)
 ```
 
-### 1.3 Dependency Flow (Strict)
-Imports must follow a **top-down** direction only:
-`ui/ → controllers/ → services/ → models/ → core/`
-*   Violation of this rule breaks testability and creates circular dependencies.
+### 1.3 Layer Responsibilities
+*   **Services** must be **pure, sync, and side-effect free**.
+    *   No logging, no navigation, no UI access, no state mutation outside their scope.
+    *   **No Async**: Services must not perform network calls or database access.
+    *   **Determinism Lock**: Services must not depend on `DateTime.now()`, random values, or external mutable state. All required data must be provided as input parameters.
+*   **Repositories** handle all asynchronous I/O and data persistence.
+*   **Controllers** orchestrate services/repositories and manage state. 
+    *   **Logging**: Controllers are responsible for logging evaluation results.
+    *   Logging Level: Use `Info` for final decisions, `Debug/Fine` for full evaluation breakdowns.
+*   **UI** must never compute business logic inside `build()`.
 
-### 1.4 State Management
-*   **Standard**: Use **Riverpod** (`ConsumerWidget`, `NotifierProvider`).
-*   One provider file per feature domain.
-*   Use `ref.watch` for reactive UI, `ref.read` for one-time actions.
+### 1.4 Dependency Flow (Strict)
+Imports must follow a **top-down** direction only:
+`ui/ → controllers/ → repositories/ → services/ → models/ → core/`
+*   **Tooling**: Use `import_lint` or similar analysis to enforce these boundaries.
+*   Violation breaks testability and creates circular dependencies.
 
 ---
 
 ## 2. Coding Conventions
 
 ### 2.1 Language Standards
-*   Use Dart 3.x features (records, patterns, sealed classes).
-*   Prefer immutable data models — all model fields must be `final`.
-*   Use `const` constructors wherever possible.
+*   Use Dart 3.x features (records, sealed classes).
+*   **Extensions**: Must not contain decision-making business logic.
+*   Prefer immutable models — all fields must be `final`.
 
 ### 2.2 Formatting & Linting
 *   Run `dart format .` before every commit.
-*   Keep functions small and single-purpose (max ~40 lines).
-*   Enable strict analysis (`strict-casts`, `strict-inference`).
+*   **Zero-Warning Policy**: `dart analyze` must report 0 issues before any push.
 
-### 2.3 Naming Conventions
-*   Classes: `UpperCamelCase`
-*   Variables/Functions: `lowerCamelCase`
-*   Files: `snake_case.dart`
-*   Providers: `lowerCamelCaseProvider`
+### 2.3 Import Style
+*   All imports within `lib/` must use **absolute `package:` imports**.
+*   Relative imports (`../`) are strictly prohibited.
+
+### 2.4 Naming & Strings
+*   **No Hardcoded Labels**: Business logic labels (Grade A, etc.) must be defined in `core/config/engine_config.dart`.
+*   Naming: `UpperCamelCase` for Classes, `lowerCamelCase` for Variables/Functions.
 
 ---
 
@@ -59,50 +71,53 @@ Imports must follow a **top-down** direction only:
 
 ### 3.1 Strategy
 *   Use **sealed Result types** for operations that can fail.
-*   Services return structured results; Controllers translate them for the UI.
-*   Show user-friendly messages, never raw stack traces.
+*   Never silently swallow errors — always log or propagate.
 
-### 3.2 Model Integrity
-*   Model constructors must enforce valid state (should be impossible to create an invalid instance).
-*   Use `assert` in debug mode for internal invariants.
-
----
-
-## 4. UI/UX Standards
-
-### 4.1 Theme & Typography
-*   Default: Dark Theme (`Color(0xFF0F172A)`).
-*   Centralize colors in `AppColors` and styles in `AppTextStyles`.
-*   No hardcoded hex values in widgets.
-
-### 4.2 Performance
-*   Use `const` constructors.
-*   Extract frequently rebuilding sections into small, focused widgets.
-*   Avoid expensive computations in `build()`.
+### 3.2 Numeric Precision
+*   Use `double` for indicators. Never compare with `==`.
+*   Use `(a - b).abs() < kDoubleTolerance` defined in `core/constants/`.
 
 ---
 
-## 5. Testing Standards
+## 4. Trading Logic Standards (The Contract)
 
-### 5.1 Rules
-*   Every public method in the Service layer must have a Unit Test.
-*   Location: `test/unit/` for logic, `test/widget/` for UI.
-*   Business logic must NOT be tested through widget tests.
+### 4.1 Deterministic Scoring
+*   All parameter weights and thresholds must reside in `lib/core/config/engine_config.dart`.
+*   **Dynamic Denominator**: The total possible score must be derived from the sum of weights, not hardcoded.
+*   **Serializable Core**: Engine evaluation results must be serializable (e.g., `toJson()`).
 
-### 5.2 Targets
-*   **Coverage**: Critical logic coverage must remain above 80%.
-*   Verify all boundary cases (e.g., score thresholds).
+### 4.2 Hard Filters
+*   Must be evaluated **before** scoring logic.
+*   **Short-Circuit**: A failed hard filter must stop calculation and skip normalization.
+
+### 4.3 Engine Versioning
+Any change to weights or thresholds requires:
+1. Increment the project minor version (e.g., 1.2 → 1.3).
+2. Update `docs/CHANGELOG.md` with "ENGINE CHANGE" tag.
+3. Update boundary tests.
+4. **Enforcement**: PRs modifying logic without changelog updates must be rejected.
 
 ---
 
-## 6. Git & Workflow
+## 5. UI/UX Standards
 
-### 6.1 Process
-*   **Feature Branches**: All work happens on `feature/xxx` or `fix/xxx`.
-*   **Commits**: Use conventional commits (`feat:`, `fix:`, `docs:`, `test:`).
-*   **PRs**: Describe what, why, and impact. Review required before merge.
+### 5.1 Color Mapping
+*   **High (Grade A)** → Green
+*   **Medium (Grade B)** → Orange (Updated from Yellow for better contrast)
+*   **Low (Grade C)** → Red
 
-### 6.2 Pre-Commit Checklist
-1. `dart format .`
-2. `dart analyze`
-3. `flutter test`
+---
+
+## 6. Testing & CI
+
+### 6.1 Requirements
+*   Every public Service method must have Unit Tests.
+*   **Coverage**: Critical service logic must maintain **>80% coverage**.
+*   **CI Gate**: PRs must fail automatically if coverage drops below the 80% threshold for services.
+
+---
+
+## 7. Git & Workflow
+*   **Conventional Commits**: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`.
+*   **PR Review**: Description must state if an "ENGINE CHANGE" is included.
+*   Reviewer Checklist: Verify dependency flow and sync-purity of services.
