@@ -59,10 +59,12 @@ echo -e "${GREEN}✔ Discovered ${ALL_TEST_COUNT} test files.${NC}"
 # ──────────────────────────────────────────
 # STEP 3: Execution (All Tests)
 # ──────────────────────────────────────────
-echo -e "\n${CYAN}[3/4] Running All Tests...${NC}"
+echo -e "\n${CYAN}[3/4] Running All Tests (Silent on Success)...${NC}"
 TMPFILE=$(mktemp)
-if flutter test --reporter compact > "$TMPFILE" 2>&1; then
-    tail -n 1 "$TMPFILE"
+# Using 'expanded' reporter for cleaner logs in the temp file
+if flutter test --reporter expanded > "$TMPFILE" 2>&1; then
+    # On success, just show the final count summary from the last line
+    echo -e "${GREEN}✔ All tests passed successfully.${NC}"
     rm -f "$TMPFILE"
 else
     print_test_failures "$TMPFILE" "Test Execution Failed."
