@@ -22,6 +22,7 @@ migrate_working_dir/
 .vscode/
 .history/
 *.code-workspace
+.canvas
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -33,19 +34,45 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Android related
+android/local.properties
+android/key.properties
+android/app/src/main/res/values/strings.xml
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# iOS related
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.[mh]
+ios/Runner/GeneratedPluginRegistrant.swift
+ios/fastlane/report.xml
+ios/fastlane/Preview.html
+ios/fastlane/screenshots
+ios/fastlane/test_output
+
 # Web related
 .web_assets/
+
+# Testing/Coverage
+coverage/
+*.lcov
+
+# Environment / Secret Files
+.env
+.env.*
 
 # Symbolication related
 app.*.symbols
 
 # Obfuscation related
 app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
 
 # Linux
 /linux/flutter/ephemeral
