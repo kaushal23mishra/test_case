@@ -160,5 +160,6 @@ This script is the project's gatekeeper. It performs the following checks in ord
 2.  **Audit**: Discovers all `*_test.dart` files and ensures they are accounted for.
 3.  **Test Run**: Executes the entire test suite (Unit, Widget, Global, Smoke).
 4.  **Integrity**: Blocks the process if any test file was skipped or failed.
+5.  **Silent on Success**: Success output MUST be concise. Individual test cases should NOT be listed unless they fail.
 
 **Mandatory Usage**: Every developer MUST run `./test_agent.sh` before pushing code.

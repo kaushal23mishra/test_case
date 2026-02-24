@@ -121,6 +121,10 @@ void main() {
       final standards = File('docs/PROJECT_STANDARDS.md').readAsStringSync();
       expect(standards.contains('Section 6.2') || standards.contains('Smoke Test'), isTrue, 
           reason: 'Section 6.2 (Smoke Test) must be documented in Project Standards.');
+
+      // Check for Silent on Success rule
+      expect(standards.contains('Silent on Success'), isTrue,
+          reason: '"Silent on Success" rule must be documented in Project Standards (Section 8.1).');
     });
   });
 }
