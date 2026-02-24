@@ -56,15 +56,15 @@ class TradingController extends Notifier<TradingState> {
   }
 
   void toggleParameter(String title) {
-    final newState = TradingState(
+    var newState = state.copyWith(
       technicals: state.technicals.map((p) => p.title == title ? p.copyWith(isChecked: !p.isChecked) : p).toList(),
       riskManagement: state.riskManagement.map((p) => p.title == title ? p.copyWith(isChecked: !p.isChecked) : p).toList(),
       marketConditions: state.marketConditions.map((p) => p.title == title ? p.copyWith(isChecked: !p.isChecked) : p).toList(),
     );
 
+    // Update evaluation metrics using service
     final score = _service.calculateScore(newState.technicals, newState.riskManagement, newState.marketConditions);
     
-    // Create snapshot for logging/evaluation
     final snapshots = {
       for (final p in [...newState.technicals, ...newState.riskManagement, ...newState.marketConditions])
         p.title: p.isChecked
@@ -72,21 +72,57 @@ class TradingController extends Notifier<TradingState> {
 
     final evaluation = _service.evaluate(score, snapshots);
 
-    // Configurable Logging Log Levels
-    // Info: Final decision only
+    // Update state with evaluation results
+    newState = newState.copyWith(
+      totalScore: evaluation.rawScore,
+      decision: evaluation.decision,
+      grade: evaluation.grade,
+      percentage: evaluation.percentage,
+    );
+
     log.info('Evaluation Decision: ${evaluation.grade} -> ${evaluation.decision}');
-    // Debug: Full evaluation breakdown
     log.fine('Evaluation Breakdown: ${evaluation.toJson()}');
 
     state = newState;
   }
 
+  /// Updates multiple parameters at once from an auto-detection map.
+  void applyAutoDetection(Map<String, bool> decisions) {
+    final newState = state.copyWith(
+      technicals: state.technicals.map((p) => decisions.containsKey(p.title) ? p.copyWith(isChecked: decisions[p.title], isAutoDetected: true) : p).toList(),
+      riskManagement: state.riskManagement.map((p) => decisions.containsKey(p.title) ? p.copyWith(isChecked: decisions[p.title], isAutoDetected: true) : p).toList(),
+      marketConditions: state.marketConditions.map((p) => decisions.containsKey(p.title) ? p.copyWith(isChecked: decisions[p.title], isAutoDetected: true) : p).toList(),
+    );
+
+    // Re-evaluate
+    final score = _service.calculateScore(newState.technicals, newState.riskManagement, newState.marketConditions);
+    final snapshots = {
+      for (final p in [...newState.technicals, ...newState.riskManagement, ...newState.marketConditions])
+        p.title: p.isChecked
+    };
+    final evaluation = _service.evaluate(score, snapshots);
+
+    state = newState.copyWith(
+      totalScore: evaluation.rawScore,
+      decision: evaluation.decision,
+      grade: evaluation.grade,
+      percentage: evaluation.percentage,
+    );
+
+    log.info('Auto-detection applied. Final Score: ${evaluation.rawScore}');
+  }
+
   void reset() {
     log.info('Resetting evaluation dashboard.');
-    state = TradingState(
+    final newState = TradingState(
       technicals: state.technicals.map((p) => p.copyWith(isChecked: false)).toList(),
       riskManagement: state.riskManagement.map((p) => p.copyWith(isChecked: false)).toList(),
       marketConditions: state.marketConditions.map((p) => p.copyWith(isChecked: false)).toList(),
+      totalScore: 0,
+      decision: "Low Probability (No Trade)",
+      grade: "Grade C",
+      percentage: 0.0,
     );
+    state = newState;
   }
 }

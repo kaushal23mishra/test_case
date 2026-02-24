@@ -117,6 +117,13 @@ Any change to weights or thresholds requires:
 
 ---
 
+### 6.2 Final Verification (Smoke Test)
+*   **Tests are not enough**: Passing unit and widget tests is a baseline, but not a guarantee of a working app.
+*   **Mandatory Run**: After all tests pass, the application must be successfully built and run (Hot Restart) to verify there are no runtime crashes or initialization errors.
+*   **Sign-off**: A feature is only considered "Done" when it passes tests AND a manual/automated smoke test of the running UI.
+
+---
+
 ## 7. Git & Workflow
 *   **Conventional Commits**: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`.
 *   **PR Review**: Description must state if an "ENGINE CHANGE" is included.

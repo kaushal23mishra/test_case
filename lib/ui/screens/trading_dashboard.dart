@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_case/core/config/engine_config.dart';
 import 'package:test_case/controllers/trading_controller.dart';
+import 'package:test_case/core/config/engine_config.dart';
 import 'package:test_case/models/trading_parameter.dart';
 
 class TradingDashboard extends ConsumerWidget {
@@ -51,7 +51,7 @@ class TradingDashboard extends ConsumerWidget {
     final decision = state.decision;
     
     // Using Centralized Thresholds for Colors
-    Color statusColor = score >= EngineConfig.gradeAThreshold
+    final Color statusColor = score >= EngineConfig.gradeAThreshold
         ? Colors.greenAccent
         : (score >= EngineConfig.gradeBThreshold ? Colors.orangeAccent : Colors.redAccent);
 
@@ -117,9 +117,31 @@ class TradingDashboard extends ConsumerWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.only(bottom: 8),
       child: CheckboxListTile(
-        title: Text(parameter.title,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w600)),
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(parameter.title,
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600)),
+            ),
+            if (parameter.isAutoDetected) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text('AUTO',
+                    style: TextStyle(
+                        color: Colors.blueAccent,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5)),
+              ),
+            ],
+          ],
+        ),
         subtitle: Text(parameter.description,
             style: const TextStyle(color: Colors.white54, fontSize: 12)),
         value: parameter.isChecked,

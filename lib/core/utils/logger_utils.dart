@@ -1,5 +1,5 @@
-import 'package:logging/logging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:logging/logging.dart';
 
 final log = Logger('TradingApp');
 
