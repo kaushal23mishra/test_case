@@ -125,6 +125,46 @@ void main() {
       // Check for Silent on Success rule
       expect(standards.contains('Silent on Success'), isTrue,
           reason: '"Silent on Success" rule must be documented in Project Standards (Section 8.1).');
+
+      // Check for Strict Mode (fatal-infos)
+      expect(standards.contains('--fatal-infos') && standards.contains('--fatal-warnings'), isTrue,
+          reason: 'Strict Mode with fatal-infos must be documented (Section 2.2).');
+
+      // Check for Quality Gate Tooling
+      expect(standards.contains('test_agent.sh') && standards.contains('Gatekeeper'), isTrue,
+          reason: 'test_agent.sh as a Gatekeeper must be documented (Section 8.1).');
+
+      // Check for Logging Discipline
+      expect(standards.contains('Logging Discipline') && standards.contains('NO print()'), isTrue,
+          reason: 'Logging Discipline (NO print) must be documented (Section 2.2).');
+
+      // Check for Native Plugin Fallbacks
+      expect(standards.contains('Native Plugin Fallbacks') || standards.contains('Native Plugins'), isTrue,
+          reason: 'Native Plugin Fallbacks for testing must be documented (Section 6.2).');
+    });
+
+    test('Meta-Test: Every Standard Section must be verified by a test case in this file', () {
+      final standardsFile = File('docs/PROJECT_STANDARDS.md').readAsStringSync();
+      // Current test file content
+      final testFile = File('test/project_standards_test.dart').readAsStringSync();
+
+      // List of critical keywords that MUST be tested if they exist in standards
+      final mandatoryCheckpoints = {
+        'Section 1.2': 'layered architecture',
+        'Section 2.3': 'snake_case',
+        'Section 1.3': 'pure and sync',
+        'kDoubleTolerance': 'kDoubleTolerance',
+        'Section 2.2': 'print()',
+        'Section 8.1': 'test_agent.sh',
+        'Section 6.2': 'Smoke Test',
+      };
+
+      mandatoryCheckpoints.forEach((section, keyword) {
+        if (standardsFile.contains(section)) {
+          expect(testFile.contains(keyword), isTrue,
+              reason: 'Standard "$section" is documented but lacks a verification test in this file for keyword "$keyword".');
+        }
+      });
     });
   });
 }
