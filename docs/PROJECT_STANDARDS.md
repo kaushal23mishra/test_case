@@ -155,7 +155,7 @@ Any change to weights or thresholds requires:
 ## 8. Quality Gate Enforcement (Tooling)
 
 ### 8.1 `./test_agent.sh`
-This script is the project's gatekeeper. It performs the following checks in order:
+This script is the project's Gatekeeper. It performs the following checks in order:
 1.  **Static Analysis**: Runs `flutter analyze --fatal-infos --fatal-warnings`.
 2.  **Audit**: Discovers all `*_test.dart` files and ensures they are accounted for.
 3.  **Test Run**: Executes the entire test suite (Unit, Widget, Global, Smoke).
