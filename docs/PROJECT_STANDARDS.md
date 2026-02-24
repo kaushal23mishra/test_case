@@ -37,6 +37,10 @@ lib/
     *   **Logging**: Controllers are responsible for logging evaluation results.
     *   Logging Level: Use `Info` for final decisions, `Debug/Fine` for full evaluation breakdowns.
 *   **UI** must never compute business logic inside `build()`.
+*   **State Management (Riverpod)**:
+    *   Use `ref.watch` for anything that affects the UI rendering.
+    *   Use `ref.read` ONLY inside callbacks (like `onPressed`) or for initializing one-time actions.
+    *   Keep Providers small and focused on a single piece of state.
 
 ### 1.4 Dependency Flow (Strict)
 Imports must follow a **top-down** direction only:
@@ -57,6 +61,11 @@ Imports must follow a **top-down** direction only:
 *   Run `dart format .` before every commit.
 *   **Zero-Warning Policy**: `flutter analyze --fatal-infos --fatal-warnings` must report 0 issues.
 *   **Strict Mode**: Any info, warning, or lint violation is considered a build-blocking error.
+*   **Logging Discipline**:
+    *   Use the centralized `log` instance from `core/utils/logger_utils.dart`.
+    *   **Level INFO**: For final results, state transitions, or major user actions.
+    *   **Level SEVERE**: For errors that stop a process.
+    *   **NO print()**: Use `log` or `debugPrint`. The analyzer will block `print`.
 *   **Analyzer Configuration**:
     *   `strict-casts: true`: Prevents implicit downcasts from `dynamic`.
     *   `strict-inference: true`: Forces explicit types where inference might fail or be too broad.
@@ -129,6 +138,10 @@ Any change to weights or thresholds requires:
 *   **Mandatory Run**: After all tests pass, the application must be successfully built and run (Hot Restart) to verify there are no runtime crashes or initialization errors.
 *   **Automated Smoke Test**: Run `test/smoke_test.dart` to verify app initialization and basic navigation.
 *   **Sign-off**: A feature is only considered "Done" when it passes tests AND the automated smoke test suite.
+*   **Test Stability (Native Plugins)**: 
+    *   Widgets using native-only plugins (like WebView) must provide a fallback for test environments.
+    *   Example: `if (kDebugMode && someTestingFlag) return SizedBox();`
+    *   This ensures the "Smoke Test" can mount the entire tree without a physical device.
 
 ---
 
