@@ -61,13 +61,13 @@ void main() {
 
       await _pumpDashboard(tester);
 
-      // Starting with score 3 (Trap Check)
-      // Toggle items to reach Grade B (>= 55%, which is 10/17 or 11/17)
-      // Add Trend (+3=6), RR (+3=9), Support (+2=11)
+      // Starting with score 3 (Trap Check, default)
+      // totalPossibleScore = 21. Grade B >= 55% => need 12+ pts.
+      // Add: TopDown(+4=7), Trend(+3=10), RR(+3=13) => 13/21 = 61.9% = Grade B
       final items = [
+        'Top-Down Alignment',
         'Trend Alignment',
         'Risk-Reward Ratio',
-        'Support/Resistance',
       ];
       for (final item in items) {
         final finder = find.text(item);
@@ -77,7 +77,7 @@ void main() {
       }
 
       expect(
-        find.text('11 / ${EngineConfig.totalPossibleScore}'),
+        find.text('13 / ${EngineConfig.totalPossibleScore}'),
         findsOneWidget,
       );
       expect(find.textContaining('Allow (Half Size)'), findsOneWidget);

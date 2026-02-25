@@ -41,9 +41,9 @@ void main() {
     });
 
     test('evaluate should return Grade A when percentage meets threshold', () {
-      // Assuming total possible score is enough to reach 85%
+      // Use totalPossibleScore as the raw score to guarantee Grade A (100%)
       final result = service.evaluate(
-        CalculationResult(score: 15), // 15/17 is ~88.2%
+        CalculationResult(score: EngineConfig.totalPossibleScore),
         {},
       );
       expect(result.grade, EngineConfig.gradeA);

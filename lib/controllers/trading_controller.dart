@@ -19,6 +19,12 @@ class TradingController extends Notifier<TradingState> {
 
     final technicals = [
       const TradingParameter(
+        title: 'Top-Down Alignment',
+        description:
+            'Long TF trend direction + Medium TF entry zone + Short TF entry signal — all 3 must align.',
+        weight: EngineConfig.topDownAlignmentWeight,
+      ),
+      const TradingParameter(
         title: 'Trend Alignment',
         description: 'Price is above 200 EMA and making Higher Highs.',
         weight: EngineConfig.trendAlignmentWeight,
@@ -228,11 +234,14 @@ class TradingController extends Notifier<TradingState> {
           state.marketConditions
               .map((p) => p.copyWith(isChecked: false))
               .toList(),
-      totalScore: 3,
-      grade: "C",
-      action: "block",
-      positionSize: "none",
-      percentage: (3 / EngineConfig.totalPossibleScore * 100),
+      totalScore: EngineConfig.liquidityTrapWeight,
+      grade: EngineConfig.gradeC,
+      action: 'block',
+      positionSize: 'none',
+      percentage:
+          (EngineConfig.liquidityTrapWeight /
+              EngineConfig.totalPossibleScore *
+              100),
     );
     state = newState;
   }

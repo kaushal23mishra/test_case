@@ -36,27 +36,28 @@ void main() {
       () {
         final notifier = container.read(tradingProvider.notifier);
 
-        // Reach Medium Probability (>= 55%)
+        // Reach Medium Probability (>= 55%) with new totalPossibleScore = 21
         // Starting with 3 (Trap Check)
-        notifier.toggleParameter('Trend Alignment'); // +3 = 6
-        notifier.toggleParameter('Risk-Reward Ratio'); // +3 = 9
-        notifier.toggleParameter('Support/Resistance'); // +2 = 11
-        // Total = 11. 11/17 = 64.7%
+        notifier.toggleParameter('Top-Down Alignment'); // +4 = 7
+        notifier.toggleParameter('Trend Alignment'); // +3 = 10
+        notifier.toggleParameter('Risk-Reward Ratio'); // +3 = 13
+        // Total = 13. 13/21 = 61.9% → Grade B
 
         var state = container.read(tradingProvider);
         expect(state.percentage, greaterThanOrEqualTo(55.0));
-        expect(state.action, "allow");
-        expect(state.positionSize, "half");
+        expect(state.action, 'allow');
+        expect(state.positionSize, 'half');
 
-        // Reach High Probability (>= 85%)
-        notifier.toggleParameter('Volume Confirmation'); // +2 = 13
-        notifier.toggleParameter('Position Sizing'); // +2 = 15
-        // Total = 15. 15/17 = 88.2%
+        // Reach High Probability (>= 85%), need >= 17.85 → 18 pts
+        notifier.toggleParameter('Support/Resistance'); // +2 = 15
+        notifier.toggleParameter('Volume Confirmation'); // +2 = 17
+        notifier.toggleParameter('Position Sizing'); // +2 = 19
+        // Total = 19. 19/21 = 90.5% → Grade A
 
         state = container.read(tradingProvider);
         expect(state.percentage, greaterThanOrEqualTo(85.0));
-        expect(state.action, "allow");
-        expect(state.positionSize, "full");
+        expect(state.action, 'allow');
+        expect(state.positionSize, 'full');
       },
     );
 

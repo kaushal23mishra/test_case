@@ -10,6 +10,7 @@ class EngineConfig {
   static const int volatilityAtrWeight = 1;
   static const int newsIntegrityWeight = 1;
   static const int liquidityTrapWeight = 3; // High weight for trap avoidance
+  static const int topDownAlignmentWeight = 4; // Highest weight: all 3 timeframes must align
 
   // Derived denominator
   static const int totalPossibleScore =
@@ -20,7 +21,8 @@ class EngineConfig {
       positionSizingWeight +
       volatilityAtrWeight +
       newsIntegrityWeight +
-      liquidityTrapWeight;
+      liquidityTrapWeight +
+      topDownAlignmentWeight;
 
   // Grade Thresholds (Percentages)
   static const double gradeAPercentThreshold = 85.0;

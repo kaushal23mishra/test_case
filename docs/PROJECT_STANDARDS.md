@@ -1,8 +1,8 @@
 # Project Standards
 
-**Version**: 1.5.0  
+**Version**: 1.6.0  
 **Status**: Active  
-**Last Updated**: 2026-02-24
+**Last Updated**: 2026-02-25
 
 ---
 
@@ -112,6 +112,36 @@ Any change to weights or thresholds requires:
 2. Update `docs/CHANGELOG.md` with "ENGINE CHANGE" tag.
 3. Update boundary tests.
 4. **Enforcement**: PRs modifying logic without changelog updates must be rejected.
+
+### 4.4 Top-Down Multi-Timeframe Analysis (The 3-Layer Rule)
+
+> *"Trend pehle big time frame me, entry zone medium me, aur execution short me — teeno aligned ho tab hi trade lena."*
+
+This is the foundational methodology for all high-accuracy setups. It is enforced as the **highest-weight parameter** in the scoring engine (`topDownAlignmentWeight = 4`).
+
+#### The 3-Layer Framework
+
+| Layer | Timeframe | Purpose | Tool |
+|-------|-----------|---------|------|
+| **Long (L1)** | Weekly / Daily | Identify overall trend direction | EMA200, Swing Highs/Lows |
+| **Medium (L2)** | 4H / 1H | Find precise entry zone & pullback | Key S/R levels, Fibonacci |
+| **Short (L3)** | 15m / 5m | Time the exact entry & confirm signal | Candlestick patterns, Volume |
+
+#### Mandatory Alignment Rules
+1. **L1 Direction First**: Determine trend on Daily/Weekly. If bullish → look for LONG setups only. Never counter-trend on a lower frame.
+2. **L2 Entry Zone**: Trade must originate from a valid S/R zone, Fibonacci level, or pullback on the Medium TF. Random entries are disqualified.
+3. **L3 Timing Confirmation**: Execute on Short TF only when a confirming signal appears (e.g., bullish engulfing, volume spike, breakout retest).
+4. **All-or-Nothing**: If ANY of the 3 layers is unclear or counter-directional, the setup is **rejected**. No partial alignment is acceptable.
+
+#### Why This Increases Accuracy
+- Top-Down filtering eliminates trades that are valid on one timeframe but invalid on another.
+- It naturally reduces false signals because multiple Independent confirmations are required.
+- Risk is automatically limited to high-probability zones identified from higher timeframes.
+
+#### Code Contract
+- `TradingParameter(title: 'Top-Down Alignment', weight: EngineConfig.topDownAlignmentWeight)` must exist in `TradingController.build()` as the **first** item in the technicals list.
+- Weight must always be the highest single-parameter weight in `EngineConfig`.
+- The parameter is **not** a hard filter (to allow partial scoring) but **must be checked** for any Grade A trade.
 
 ---
 
