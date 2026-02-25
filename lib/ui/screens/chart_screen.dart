@@ -15,8 +15,10 @@ class ChartScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chart Analysis',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        title: const Text(
+          'Chart Analysis',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
         backgroundColor: const Color(0xFF1E293B),
         elevation: 0,
       ),
@@ -35,10 +37,7 @@ class ChartScreen extends ConsumerWidget {
               onChartLoaded: (_) {},
             ),
           ),
-          Expanded(
-            flex: 2,
-            child: _AnalysisPanel(chartState: chartState),
-          ),
+          Expanded(flex: 2, child: _AnalysisPanel(chartState: chartState)),
         ],
       ),
     );
@@ -92,7 +91,10 @@ class _AnalysisPanel extends ConsumerWidget {
         Text(
           'Analysis: ${chartState.symbol}',
           style: const TextStyle(
-              color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
@@ -106,8 +108,10 @@ class _AnalysisPanel extends ConsumerWidget {
           children: [
             CircularProgressIndicator(color: Colors.blueAccent),
             SizedBox(height: 12),
-            Text('Fetching market data...',
-                style: TextStyle(color: Colors.white54)),
+            Text(
+              'Fetching market data...',
+              style: TextStyle(color: Colors.white54),
+            ),
           ],
         ),
       ),
@@ -127,8 +131,10 @@ class _AnalysisPanel extends ConsumerWidget {
           const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
           const SizedBox(width: 8),
           Expanded(
-            child:
-                Text(message, style: const TextStyle(color: Colors.redAccent)),
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
           ),
         ],
       ),
@@ -145,10 +151,11 @@ class _AnalysisPanel extends ConsumerWidget {
         _indicatorChip('RSI 14', indicators.rsi14.toStringAsFixed(1)),
         _indicatorChip('ATR 14', indicators.atr14.toStringAsFixed(2)),
         _indicatorChip(
-            'Volume',
-            indicators.currentVolume > 1000000
-                ? '${(indicators.currentVolume / 1000000).toStringAsFixed(1)}M'
-                : '${(indicators.currentVolume / 1000).toStringAsFixed(0)}K'),
+          'Volume',
+          indicators.currentVolume > 1000000
+              ? '${(indicators.currentVolume / 1000000).toStringAsFixed(1)}M'
+              : '${(indicators.currentVolume / 1000).toStringAsFixed(0)}K',
+        ),
       ],
     );
   }
@@ -162,11 +169,18 @@ class _AnalysisPanel extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          Text(label,
-              style: const TextStyle(color: Colors.white38, fontSize: 10)),
-          Text(value,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white38, fontSize: 10),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -176,28 +190,34 @@ class _AnalysisPanel extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Auto-Detection',
-            style: TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-                fontWeight: FontWeight.w600)),
+        const Text(
+          'Auto-Detection',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: 6),
-        ...detection.parameterDecisions.entries.map((e) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                children: [
-                  Icon(
-                    e.value ? Icons.check_circle : Icons.cancel,
-                    color: e.value ? Colors.greenAccent : Colors.redAccent,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(e.key,
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 13)),
-                ],
-              ),
-            )),
+        ...detection.parameterDecisions.entries.map(
+          (e) => Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: [
+                Icon(
+                  e.value ? Icons.check_circle : Icons.cancel,
+                  color: e.value ? Colors.greenAccent : Colors.redAccent,
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  e.key,
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -207,20 +227,20 @@ class _AnalysisPanel extends ConsumerWidget {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: hasApplied
-            ? null
-            : () => ref.read(chartProvider.notifier).applyAutoDetection(),
+        onPressed:
+            hasApplied
+                ? null
+                : () => ref.read(chartProvider.notifier).applyAutoDetection(),
         icon: Icon(hasApplied ? Icons.check : Icons.auto_fix_high),
-        label: Text(hasApplied
-            ? 'Applied to Checklist'
-            : 'Apply to Checklist'),
+        label: Text(hasApplied ? 'Applied to Checklist' : 'Apply to Checklist'),
         style: ElevatedButton.styleFrom(
           backgroundColor:
               hasApplied ? Colors.grey.shade800 : Colors.blueAccent,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );

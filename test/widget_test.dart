@@ -4,8 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:test_case/ui/screens/trading_dashboard.dart';
 
 void main() {
-  testWidgets('TradingDashboard smoke test — renders core elements',
-      (WidgetTester tester) async {
+  testWidgets('TradingDashboard smoke test — renders core elements', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(

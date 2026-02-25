@@ -65,7 +65,7 @@ Imports must follow a **top-down** direction only:
     *   Use the centralized `log` instance from `core/utils/logger_utils.dart`.
     *   **Level INFO**: For final results, state transitions, or major user actions.
     *   **Level SEVERE**: For errors that stop a process.
-    *   **NO print()**: Use `log` or `debugPrint`. The analyzer will block `print`.
+    *   **NO print()/debugPrint()**: Use `log` from `logger_utils.dart`. Both `print` and `debugPrint` are blocked by quality gate tests to ensure structured logging.
 *   **Analyzer Configuration**:
     *   `strict-casts: true`: Prevents implicit downcasts from `dynamic`.
     *   `strict-inference: true`: Forces explicit types where inference might fail or be too broad.
@@ -90,8 +90,8 @@ Imports must follow a **top-down** direction only:
 *   Never silently swallow errors — always log or propagate.
 
 ### 3.2 Numeric Precision
-*   Use `double` for indicators. Never compare with `==`.
-*   Use `(a - b).abs() < kDoubleTolerance` defined in `core/constants/`.
+*   Use `double` for indicators. Never compare with `==` or `!=`.
+*   Use `(a - b).abs() < kDoubleTolerance` defined in `core/constants/`. Direct double comparison is blocked by quality gate tests.
 
 ---
 
@@ -129,7 +129,7 @@ Any change to weights or thresholds requires:
 ### 6.1 Requirements
 *   Every public Service method must have Unit Tests.
 *   **Coverage**: Critical service logic must maintain **>80% coverage**.
-*   **Quality Gate**: Use `./test_agent.sh` for local validation before pushing.
+*   **Quality Gate**: Use `scripts/project_guardian.sh` for local validation or install it as a git hook.
 
 ---
 
@@ -154,12 +154,19 @@ Any change to weights or thresholds requires:
 
 ## 8. Quality Gate Enforcement (Tooling)
 
-### 8.1 `./test_agent.sh`
-This script is the project's Gatekeeper. It performs the following checks in order:
-1.  **Static Analysis**: Runs `flutter analyze --fatal-infos --fatal-warnings`.
-2.  **Audit**: Discovers all `*_test.dart` files and ensures they are accounted for.
-3.  **Test Run**: Executes the entire test suite (Unit, Widget, Global, Smoke).
-4.  **Integrity**: Blocks the process if any test file was skipped or failed.
-5.  **Silent on Success**: Success output MUST be concise. Individual test cases should NOT be listed unless they fail.
+### 8.1 `scripts/project_guardian.sh` (Supreme Gatekeeper)
+This script is the project's primary automated quality engine. It is both a manual validation tool and an automated git hook. It performs:
+1.  **Standards Analysis**: Verifies `docs/PROJECT_STANDARDS.md` and ensures `test/project_standards_test.dart` is in sync (Meta-Test).
+2.  **Static Analysis**: Runs `flutter analyze --fatal-infos --fatal-warnings`.
+3.  **Engineering Audit**: Verifies layered architecture, naming, and precision rules.
+4.  **Full Test Suite**: Executes all Unit/Widget tests.
+5.  **Silent on Success**: Success output is concise; individual test cases are NOT listed unless they fail (Section 8.1).
+6.  **Runtime Smoke Test**: Validates that the app starts and navigates without crashing via `test/smoke_test.dart`.
 
-**Mandatory Usage**: Every developer MUST run `./test_agent.sh` before pushing code.
+**Installation as Git Hook**:
+```bash
+cp scripts/project_guardian.sh .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+```
+
+**Mandatory Usage**: Every developer MUST ensure the Guardian passes locally before any push. Failure to fix violations is a breach of Engineering Standards.

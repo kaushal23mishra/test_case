@@ -1,4 +1,5 @@
 import 'package:test_case/core/config/engine_config.dart';
+import 'package:test_case/core/constants/constants.dart';
 import 'package:test_case/models/indicator_result.dart';
 import 'package:test_case/models/market_data.dart';
 
@@ -52,7 +53,7 @@ class IndicatorService {
     avgLoss /= period;
 
     // First RSI
-    if (avgLoss == 0) {
+    if (avgLoss < kDoubleTolerance) {
       rsiValues.add(100.0);
     } else {
       final rs = avgGain / avgLoss;
@@ -68,7 +69,7 @@ class IndicatorService {
       avgGain = (avgGain * (period - 1) + gain) / period;
       avgLoss = (avgLoss * (period - 1) + loss) / period;
 
-      if (avgLoss == 0) {
+      if (avgLoss < kDoubleTolerance) {
         rsiValues.add(100.0);
       } else {
         final rs = avgGain / avgLoss;
@@ -157,8 +158,49 @@ class IndicatorService {
     return lastTwo[1] > lastTwo[0];
   }
 
+  /// Detects potential Liquidity Grab (Trap):
+  /// Price pushed above recent highs but failed to sustain and closed lower.
+  bool detectLiquidityGrab(List<OhlcvBar> bars, {int lookback = 3}) {
+    if (bars.length < lookback + 1) return false;
+
+    final lastBar = bars.last;
+    final previousBars = bars.sublist(
+      bars.length - (lookback + 1),
+      bars.length - 1,
+    );
+
+    final double prevMaxHigh = previousBars
+        .map((b) => b.high)
+        .reduce((a, b) => a > b ? a : b);
+
+    // Trap Condition: High is above prev highs, but close is below prev highs
+    // Plus a "wick" check: Wick must be significantly larger than body.
+    final wickSize =
+        lastBar.high -
+        (lastBar.close > lastBar.open ? lastBar.close : lastBar.open);
+    final bodySize = (lastBar.close - lastBar.open).abs();
+
+    final bool isFakeout =
+        lastBar.high > prevMaxHigh && lastBar.close < prevMaxHigh;
+    final bool isStrongRejection = wickSize > bodySize;
+
+    return isFakeout && isStrongRejection;
+  }
+
   /// Master analysis: computes all indicators from raw market data.
   IndicatorResult analyzeMarketData(MarketData data) {
+    if (data.bars.isEmpty) {
+      return const IndicatorResult(
+        currentPrice: 0,
+        ema200: 0,
+        rsi14: 50,
+        atr14: 0,
+        currentVolume: 0,
+        averageVolume: 0,
+        isHigherHighs: false,
+        isLiquidityGrab: false,
+      );
+    }
     final closes = data.bars.map((b) => b.close).toList();
     final volumes = data.bars.map((b) => b.volume).toList();
 
@@ -178,6 +220,7 @@ class IndicatorService {
       currentVolume: volumes.last,
       averageVolume: avgVolume,
       isHigherHighs: detectHigherHighs(data.bars),
+      isLiquidityGrab: detectLiquidityGrab(data.bars),
     );
   }
 
@@ -187,20 +230,25 @@ class IndicatorService {
 
     // Trend Alignment: price above EMA200 AND making higher highs
     decisions['Trend Alignment'] =
-        indicators.currentPrice > indicators.ema200 &&
-            indicators.isHigherHighs;
+        indicators.currentPrice > indicators.ema200 && indicators.isHigherHighs;
+
+    // NO Trap Detected: If we detect a liquidity grab (trap), this parameter is FALSE.
+    // We want this to be TRUE (checked) if NO trap is found.
+    decisions['No Liquidity Trap'] = !indicators.isLiquidityGrab;
 
     // Volume Confirmation: current volume above average * multiplier
-    decisions['Volume Confirmation'] = indicators.currentVolume >
+    decisions['Volume Confirmation'] =
+        indicators.currentVolume >
         (indicators.averageVolume * EngineConfig.volumeAboveAvgMultiplier);
 
     // Volatility (ATR): ATR as % of price within normal range
-    final atrPercent = indicators.currentPrice > 0
-        ? indicators.atr14 / indicators.currentPrice
-        : 0.0;
+    final atrPercent =
+        indicators.currentPrice > 0
+            ? indicators.atr14 / indicators.currentPrice
+            : 0.0;
     decisions['Volatility (ATR)'] =
         atrPercent <= EngineConfig.atrNormalRangeMaxPercent &&
-            atrPercent >= EngineConfig.atrNormalRangeMinPercent;
+        atrPercent >= EngineConfig.atrNormalRangeMinPercent;
 
     return AutoDetectionResult(
       parameterDecisions: decisions,

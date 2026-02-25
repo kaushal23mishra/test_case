@@ -31,8 +31,10 @@ class _TradingViewChartState extends State<TradingViewChart> {
     }
 
     // Checking if we are in a test environment to provide a safe fallback
-    final isTesting = Icons.check_circle_outline.fontFamily == 'MaterialIcons'; // Simple check for test env
-    
+    final isTesting =
+        Icons.check_circle_outline.fontFamily ==
+        'MaterialIcons'; // Simple check for test env
+
     return Stack(
       children: [
         if (!isTesting)
@@ -53,9 +55,11 @@ class _TradingViewChartState extends State<TradingViewChart> {
                     final event = args[0] as Map;
                     if (event['event'] == 'chartLoaded') {
                       final symbolData = event['data'];
-                      final symbol = (symbolData is Map && symbolData.containsKey('symbol'))
-                          ? symbolData['symbol'] as String
-                          : widget.symbol;
+                      final symbol =
+                          (symbolData is Map &&
+                                  symbolData.containsKey('symbol'))
+                              ? symbolData['symbol'] as String
+                              : widget.symbol;
                       widget.onChartLoaded?.call(symbol);
                     }
                   }

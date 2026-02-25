@@ -80,8 +80,10 @@ class ChartController extends Notifier<ChartState> {
         final indicators = indicatorService.analyzeMarketData(data);
         final autoDetection = indicatorService.detectParameters(indicators);
 
-        log.info('Analysis complete for $symbol: '
-            '${autoDetection.parameterDecisions}');
+        log.info(
+          'Analysis complete for $symbol: '
+          '${autoDetection.parameterDecisions}',
+        );
         log.fine('Indicator values: ${indicators.toJson()}');
 
         state = state.copyWith(

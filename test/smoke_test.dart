@@ -6,41 +6,39 @@ import 'package:test_case/ui/screens/trading_dashboard.dart';
 
 void main() {
   group('Automated Project Smoke Test', () {
-    testWidgets('Initialization Smoke Test: App builds and renders Shell without crashing', (WidgetTester tester) async {
-      // We skip the WebView mock here because the widget handles it internally now
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: TradingApp(),
-        ),
-      );
+    testWidgets(
+      'Initialization Smoke Test: App builds and renders Shell without crashing',
+      (WidgetTester tester) async {
+        // We skip the WebView mock here because the widget handles it internally now
+        await tester.pumpWidget(const ProviderScope(child: TradingApp()));
 
-      // Verify no exceptions were thrown during first frame
-      expect(tester.takeException(), isNull);
-      
-      // Verify MainShell is rendered
-      expect(find.byType(MainShell), findsOneWidget);
-    });
+        // Verify no exceptions were thrown during first frame
+        expect(tester.takeException(), isNull);
 
-    testWidgets('Runtime Bridge Smoke Test: Switching tabs and loading dashboard does not throw errors', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: TradingApp(),
-        ),
-      );
+        // Verify MainShell is rendered
+        expect(find.byType(MainShell), findsOneWidget);
+      },
+    );
 
-      // Verify initial screen (Chart)
-      expect(find.byIcon(Icons.candlestick_chart), findsOneWidget);
+    testWidgets(
+      'Runtime Bridge Smoke Test: Switching tabs and loading dashboard does not throw errors',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const ProviderScope(child: TradingApp()));
 
-      // Switch to Checklist tab (TradingDashboard)
-      final checklistTab = find.byIcon(Icons.checklist);
-      expect(checklistTab, findsOneWidget);
+        // Verify initial screen (Chart)
+        expect(find.byIcon(Icons.candlestick_chart), findsOneWidget);
 
-      await tester.tap(checklistTab);
-      await tester.pumpAndSettle();
+        // Switch to Checklist tab (TradingDashboard)
+        final checklistTab = find.byIcon(Icons.checklist);
+        expect(checklistTab, findsOneWidget);
 
-      // Verify TradingDashboard is now visible and rendered correctly
-      expect(find.byType(TradingDashboard), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
+        await tester.tap(checklistTab);
+        await tester.pumpAndSettle();
+
+        // Verify TradingDashboard is now visible and rendered correctly
+        expect(find.byType(TradingDashboard), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 }

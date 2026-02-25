@@ -1,17 +1,26 @@
-# test_case
+# Trading Analysis Engine (Core)
 
-A new Flutter project.
+## 🛡️ Project Guardian (Quality Gate)
+This project uses a strict **Zero-Warning Policy** and **Automated Standards Enforcement**.
 
-## Getting Started
+### Manual Validation
+Run the Guardian before submitting any code:
+```bash
+./scripts/project_guardian.sh
+```
 
-This project is a starting point for a Flutter application.
+### Git Hook Installation (Recommended)
+Automatically validate every push:
+```bash
+cp scripts/project_guardian.sh .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+```
 
-A few resources to get you started if this is your first Flutter project:
+## 🏗️ Architecture
+The project follows a strictly layered structure:
+- `lib/services`: Pure synchronous business logic.
+- `lib/repositories`: Asynchronous I/O and data persistence.
+- `lib/controllers`: State management (Riverpod).
+- `lib/ui`: Presentation layer.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# test_case
+See `docs/PROJECT_STANDARDS.md` for full engineering specifications.

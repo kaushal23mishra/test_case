@@ -36,12 +36,19 @@ Evaluation produces a structured, **serializable** result:
 
 ## 3. Scoring & Graduation
 
-### 3.1 Decision Tiers
-| Grade | Score Range | Probability Range | Executive Strategy | Color |
-|-------|-------------|-------------------|--------------------|-------|
-| **Grade A** | 12 - 14 | 85.7% – 100% | **Aggressive**: Full Size | Green |
-| **Grade B** | 8 - 11 | 57.1% – 78.6% | **Conservative**: Half Size | Orange |
-| **Grade C** | 0 - 7 | 0.0% – 50.0% | **Avoid**: Observation only | Red |
+### 3.1 Graduation Logic (Percentage-Based)
+To ensure stability across dynamic weight changes, decision boundaries are defined by percentage thresholds rather than raw scores.
+
+| Grade | Percentage Threshold | Executive Strategy | Action | Position Size | Color |
+|-------|----------------------|--------------------|--------|---------------|-------|
+| **A** | ≥ 85.0% | **Aggressive** | `allow` | `full` | Green |
+| **B** | ≥ 55.0% | **Conservative** | `allow` | `half` | Orange |
+| **C** | < 55.0% | **Avoid** | `block` | `none` | Red |
+
+### 3.2 Precision Rules
+*   **Internal Precision**: Percentage is calculated and stored with full `double` precision.
+*   **Rounding**: Display components round to 1 decimal place.
+*   **Gap Handling**: Thresholds are continuous (>= 85, >= 55, else C) to avoid gaps.
 
 ---
 
@@ -66,8 +73,11 @@ Any modification to logic requires:
 {
   "rawScore": 14,
   "percentage": 100.0,
-  "grade": "Grade A",
-  "decision": "High Probability (Trade Allowed)",
+  "grade": "A",
+  "action": "allow",
+  "positionSize": "full",
+  "isHardFilterTriggered": false,
+  "hardFilterReason": null,
   "parameterSnapshots": {
     "Trend Alignment": true,
     "Support/Resistance": true,

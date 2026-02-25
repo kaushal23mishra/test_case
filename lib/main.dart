@@ -14,11 +14,7 @@ Future<void> main() async {
     await InAppWebViewController.setWebContentsDebuggingEnabled(true);
   }
 
-  runApp(
-    const ProviderScope(
-      child: TradingApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: TradingApp()));
 }
 
 class TradingApp extends StatelessWidget {
@@ -51,18 +47,12 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  final _screens = const [
-    ChartScreen(),
-    TradingDashboard(),
-  ];
+  final _screens = const [ChartScreen(), TradingDashboard()];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
