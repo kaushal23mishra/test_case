@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_case/controllers/chart_controller.dart';
 import 'package:test_case/models/indicator_result.dart';
 import 'package:test_case/ui/widgets/symbol_search_bar.dart';
-import 'package:test_case/ui/widgets/tradingview_widget.dart';
 
-/// Chart analysis screen with TradingView embed and auto-detection.
+/// Chart analysis screen with market data auto-detection.
 class ChartScreen extends ConsumerWidget {
   const ChartScreen({super.key});
 
@@ -32,13 +31,50 @@ class ChartScreen extends ConsumerWidget {
           ),
           Expanded(
             flex: 3,
-            child: TradingViewChart(
-              symbol: chartState.symbol,
-              onChartLoaded: (_) {},
-            ),
+            child: _ChartPlaceholder(symbol: chartState.symbol),
           ),
           Expanded(flex: 2, child: _AnalysisPanel(chartState: chartState)),
         ],
+      ),
+    );
+  }
+}
+
+class _ChartPlaceholder extends StatelessWidget {
+  final String symbol;
+  const _ChartPlaceholder({required this.symbol});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFF0F172A),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.candlestick_chart_outlined,
+              color: Color(0xFF334155),
+              size: 72,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              symbol,
+              style: const TextStyle(
+                color: Colors.white54,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Chart embed not available.\nUse the analysis panel below.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF475569), fontSize: 13),
+            ),
+          ],
+        ),
       ),
     );
   }
