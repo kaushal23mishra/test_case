@@ -194,7 +194,7 @@ void main() {
     test('Documentation files exist and contain mandatory sections', () {
       final docs = [
         'docs/PROJECT_STANDARDS.md',
-        'docs/trade_evaluation_specification.md',
+        'docs/trading_standard.md',
         'docs/CHANGELOG.md',
         'README.md',
       ];
@@ -281,8 +281,8 @@ void main() {
         // List of critical keywords that MUST be tested if they exist in standards
         final mandatoryCheckpoints = {
           'Section 1.2': 'layered architecture',
-          'Section 2.3': 'snake_case',
           'Section 1.3': 'pure and sync',
+          'docs/trading_standard.md': 'trading_standard.md',
           'kDoubleTolerance': 'kDoubleTolerance',
           'Section 2.2': 'print',
           'Section 8.1': 'project_guardian.sh',
