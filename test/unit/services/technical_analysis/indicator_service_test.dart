@@ -58,9 +58,26 @@ void main() {
 
     test('RSI is bounded between 0 and 100 for mixed data', () {
       final closes = [
-        44.0, 44.34, 44.09, 43.61, 44.33, 44.83, 45.10, 45.42,
-        45.84, 46.08, 45.89, 46.03, 45.61, 46.28, 46.28, 46.00,
-        46.03, 46.41, 46.22, 45.64
+        44.0,
+        44.34,
+        44.09,
+        43.61,
+        44.33,
+        44.83,
+        45.10,
+        45.42,
+        45.84,
+        46.08,
+        45.89,
+        46.03,
+        45.61,
+        46.28,
+        46.28,
+        46.00,
+        46.03,
+        46.41,
+        46.22,
+        45.64,
       ];
       final result = service.calculateRSI(closes, 14);
       for (final rsi in result) {
@@ -119,16 +136,99 @@ void main() {
         final base = 100.0 + i * 0.5;
         // Create swing high pattern every ~10 bars
         final isSwingHigh = (i % 10 == 5);
-        bars.add(OhlcvBar(
-          timestamp: DateTime(2024, 1, 1).add(Duration(days: i)),
-          open: base,
-          high: isSwingHigh ? base + 5 + (i * 0.2) : base + 1,
-          low: base - 1,
-          close: base + 0.5,
-          volume: 1000,
-        ));
+        bars.add(
+          OhlcvBar(
+            timestamp: DateTime(2024, 1, 1).add(Duration(days: i)),
+            open: base,
+            high: isSwingHigh ? base + 5 + (i * 0.2) : base + 1,
+            low: base - 1,
+            close: base + 0.5,
+            volume: 1000,
+          ),
+        );
       }
       expect(service.detectHigherHighs(bars), true);
+    });
+  });
+
+  group('detectLiquidityGrab', () {
+    test('returns true for a clear bullish fakeout (trap)', () {
+      final bars = [
+        OhlcvBar(
+          timestamp: DateTime(2024, 1, 1),
+          open: 100,
+          high: 105,
+          low: 99,
+          close: 101,
+          volume: 1000,
+        ),
+        OhlcvBar(
+          timestamp: DateTime(2024, 1, 2),
+          open: 101,
+          high: 106,
+          low: 100,
+          close: 102,
+          volume: 1000,
+        ),
+        OhlcvBar(
+          timestamp: DateTime(2024, 1, 3),
+          open: 102,
+          high: 105,
+          low: 101,
+          close: 103,
+          volume: 1000,
+        ),
+        // Trap Bar: High > prev highs (106), Close < prev highs, Big Wick
+        OhlcvBar(
+          timestamp: DateTime(2024, 1, 4),
+          open: 104,
+          high: 110,
+          low: 102,
+          close: 103,
+          volume: 5000,
+        ),
+      ];
+      // prevMaxHigh = 106. TrapBar: High=110, Close=103. Wick=110-104=6. Body=1.
+      expect(service.detectLiquidityGrab(bars), true);
+    });
+
+    test('returns false when price sustains above breakout level', () {
+      final bars = [
+        OhlcvBar(
+          timestamp: DateTime(2024, 1, 1),
+          open: 100,
+          high: 105,
+          low: 99,
+          close: 101,
+          volume: 1000,
+        ),
+        OhlcvBar(
+          timestamp: DateTime(2024, 1, 2),
+          open: 101,
+          high: 106,
+          low: 100,
+          close: 102,
+          volume: 1000,
+        ),
+        OhlcvBar(
+          timestamp: DateTime(2024, 1, 3),
+          open: 102,
+          high: 105,
+          low: 101,
+          close: 103,
+          volume: 1000,
+        ),
+        // Normal breakout
+        OhlcvBar(
+          timestamp: DateTime(2024, 1, 4),
+          open: 104,
+          high: 110,
+          low: 104,
+          close: 109,
+          volume: 5000,
+        ),
+      ];
+      expect(service.detectLiquidityGrab(bars), false);
     });
   });
 
@@ -185,21 +285,39 @@ void main() {
       expect(result.parameterDecisions['Volatility (ATR)'], false);
     });
 
-    test('returns exactly 3 parameter decisions', () {
+    test('No Liquidity Trap is true when no grab detected', () {
+      final indicators = _makeIndicators(isLiquidityGrab: false);
+      final result = service.detectParameters(indicators);
+      expect(result.parameterDecisions['No Liquidity Trap'], true);
+    });
+
+    test('No Liquidity Trap is false when grab detected', () {
+      final indicators = _makeIndicators(isLiquidityGrab: true);
+      final result = service.detectParameters(indicators);
+      expect(result.parameterDecisions['No Liquidity Trap'], false);
+    });
+
+    test('returns exactly 4 parameter decisions', () {
       final indicators = _makeIndicators();
       final result = service.detectParameters(indicators);
-      expect(result.parameterDecisions.length, 3);
+      expect(result.parameterDecisions.length, 4);
       expect(result.parameterDecisions.containsKey('Trend Alignment'), true);
+      expect(result.parameterDecisions.containsKey('No Liquidity Trap'), true);
       expect(
-          result.parameterDecisions.containsKey('Volume Confirmation'), true);
+        result.parameterDecisions.containsKey('Volume Confirmation'),
+        true,
+      );
       expect(result.parameterDecisions.containsKey('Volatility (ATR)'), true);
     });
   });
 }
 
 /// Helper: generate OHLCV bars for testing.
-List<OhlcvBar> _generateBars(int count,
-    {double basePrice = 100, double volatility = 1.0}) {
+List<OhlcvBar> _generateBars(
+  int count, {
+  double basePrice = 100,
+  double volatility = 1.0,
+}) {
   return List.generate(count, (i) {
     final price = basePrice + (i * 0.5);
     return OhlcvBar(
@@ -222,6 +340,7 @@ IndicatorResult _makeIndicators({
   double currentVolume = 2000000,
   double averageVolume = 1500000,
   bool isHigherHighs = true,
+  bool isLiquidityGrab = false,
 }) {
   return IndicatorResult(
     currentPrice: currentPrice,
@@ -231,5 +350,6 @@ IndicatorResult _makeIndicators({
     currentVolume: currentVolume,
     averageVolume: averageVolume,
     isHigherHighs: isHigherHighs,
+    isLiquidityGrab: isLiquidityGrab,
   );
 }

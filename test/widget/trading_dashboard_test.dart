@@ -22,47 +22,52 @@ Future<void> _pumpDashboard(WidgetTester tester) async {
 
 void main() {
   group('TradingDashboard Widget Behavioral Tests', () {
-    testWidgets(
-        'renders initial state with zero score and low probability grade',
-        (WidgetTester tester) async {
+    testWidgets('renders initial state with baseline trap check score', (
+      WidgetTester tester,
+    ) async {
       await _pumpDashboard(tester);
 
       expect(find.text('Trade Decision Framework'), findsOneWidget);
-      expect(find.text('0 / ${EngineConfig.totalPossibleScore}'),
-          findsOneWidget);
-      expect(find.textContaining('Low Probability'), findsOneWidget);
-    });
-
-    testWidgets(
-        'updates score display reactively when parameters are toggled',
-        (WidgetTester tester) async {
-      await _pumpDashboard(tester);
-
-      final finder = find.text('Trend Alignment');
-      await tester.ensureVisible(finder);
-      await tester.tap(finder);
-      await tester.pumpAndSettle();
-
       expect(
-          find.text(
-              '${EngineConfig.trendAlignmentWeight} / ${EngineConfig.totalPossibleScore}'),
-          findsOneWidget);
+        find.text('3 / ${EngineConfig.totalPossibleScore}'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Block'), findsOneWidget);
     });
 
     testWidgets(
-        'updates decision UI when grade thresholds are crossed',
-        (WidgetTester tester) async {
+      'updates score display reactively when parameters are toggled',
+      (WidgetTester tester) async {
+        await _pumpDashboard(tester);
+
+        final finder = find.text('Trend Alignment');
+        await tester.ensureVisible(finder);
+        await tester.tap(finder);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('6 / ${EngineConfig.totalPossibleScore}'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('updates decision UI when grade thresholds are crossed', (
+      WidgetTester tester,
+    ) async {
       tester.view.physicalSize = const Size(1080, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
       await _pumpDashboard(tester);
 
-      // Toggle items to reach Grade B (score >= 8)
+      // Starting with score 3 (Trap Check, default)
+      // totalPossibleScore = 21. Grade B >= 55% => need 12+ pts.
+      // Add: TopDown(+4=7), Trend(+3=10), RR(+3=13) => 13/21 = 61.9% = Grade B
       final items = [
+        'Top-Down Alignment',
         'Trend Alignment',
         'Risk-Reward Ratio',
-        'Support/Resistance'
       ];
       for (final item in items) {
         final finder = find.text(item);
@@ -71,13 +76,16 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      expect(find.text('8 / ${EngineConfig.totalPossibleScore}'),
-          findsOneWidget);
-      expect(find.textContaining('Medium Probability'), findsOneWidget);
+      expect(
+        find.text('13 / ${EngineConfig.totalPossibleScore}'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Allow (Half Size)'), findsOneWidget);
     });
 
-    testWidgets('reset button clears all active selections in the UI',
-        (WidgetTester tester) async {
+    testWidgets('reset button restores baseline trap check score', (
+      WidgetTester tester,
+    ) async {
       await _pumpDashboard(tester);
 
       final finder = find.text('Trend Alignment');
@@ -86,15 +94,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-          find.text(
-              '${EngineConfig.trendAlignmentWeight} / ${EngineConfig.totalPossibleScore}'),
-          findsOneWidget);
+        find.text('6 / ${EngineConfig.totalPossibleScore}'),
+        findsOneWidget,
+      );
 
       await tester.tap(find.byIcon(Icons.refresh));
       await tester.pumpAndSettle();
 
-      expect(find.text('0 / ${EngineConfig.totalPossibleScore}'),
-          findsOneWidget);
+      expect(
+        find.text('3 / ${EngineConfig.totalPossibleScore}'),
+        findsOneWidget,
+      );
     });
   });
 }

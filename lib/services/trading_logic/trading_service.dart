@@ -1,68 +1,94 @@
 import 'package:test_case/core/config/engine_config.dart';
+import 'package:test_case/models/trade_evaluation.dart';
 import 'package:test_case/models/trading_parameter.dart';
 
-/// Serializable result of a trade evaluation.
-class TradeEvaluation {
-  final int rawScore;
-  final double percentage;
-  final String grade;
-  final String decision;
-  final Map<String, bool> parameterSnapshots;
+class CalculationResult {
+  final int score;
+  final bool hardFilterPassed;
+  final String? failedFilterTitle;
 
-  TradeEvaluation({
-    required this.rawScore,
-    required this.percentage,
-    required this.grade,
-    required this.decision,
-    required this.parameterSnapshots,
+  CalculationResult({
+    required this.score,
+    this.hardFilterPassed = true,
+    this.failedFilterTitle,
   });
-
-  Map<String, dynamic> toJson() => {
-    'rawScore': rawScore,
-    'percentage': percentage,
-    'grade': grade,
-    'decision': decision,
-    'parameterSnapshots': parameterSnapshots,
-  };
 }
 
 class TradingService {
   /// Pure synchronous calculation of the trade score.
   /// No side effects allowed.
-  int calculateScore(List<TradingParameter> technicals, 
-                     List<TradingParameter> riskManagement, 
-                     List<TradingParameter> marketConditions) {
+  CalculationResult calculateScore(
+    List<TradingParameter> technicals,
+    List<TradingParameter> riskManagement,
+    List<TradingParameter> marketConditions,
+  ) {
+    // 1. Evaluate Hard Filters first (short-circuit)
+    final allParams = [...technicals, ...riskManagement, ...marketConditions];
+    for (var p in allParams) {
+      if (p.isHardFilter && !p.isChecked) {
+        return CalculationResult(
+          score: 0,
+          hardFilterPassed: false,
+          failedFilterTitle: p.title,
+        );
+      }
+    }
+
+    // 2. Normal weighted scoring
     int score = 0;
-    for (var p in technicals) { if (p.isChecked) score += p.weight; }
-    for (var p in riskManagement) { if (p.isChecked) score += p.weight; }
-    for (var p in marketConditions) { if (p.isChecked) score += p.weight; }
-    return score;
+    for (var p in allParams) {
+      if (p.isChecked) score += p.weight;
+    }
+
+    return CalculationResult(score: score);
   }
 
   /// Evaluates the decision parameters into a structured, serializable result.
-  TradeEvaluation evaluate(int score, Map<String, bool> snapshots) {
-    final percentage = (score / EngineConfig.totalPossibleScore * 100);
-    
-    String grade;
-    String decision;
+  TradeEvaluation evaluate(
+    CalculationResult result,
+    Map<String, bool> snapshots,
+  ) {
+    if (!result.hardFilterPassed) {
+      return TradeEvaluation(
+        rawScore: 0,
+        percentage: 0.0,
+        grade: EngineConfig.gradeC,
+        action: "block",
+        positionSize: "none",
+        parameterSnapshots: snapshots,
+        isHardFilterTriggered: true,
+        hardFilterReason: result.failedFilterTitle,
+      );
+    }
 
-    if (score >= EngineConfig.gradeAThreshold) {
+    final percentage = (result.score / EngineConfig.totalPossibleScore * 100);
+
+    String grade;
+    String action;
+    String positionSize;
+
+    if (percentage >= EngineConfig.gradeAPercentThreshold) {
       grade = EngineConfig.gradeA;
-      decision = "High Probability (Trade Allowed)";
-    } else if (score >= EngineConfig.gradeBThreshold) {
+      action = "allow";
+      positionSize = "full";
+    } else if (percentage >= EngineConfig.gradeBPercentThreshold) {
       grade = EngineConfig.gradeB;
-      decision = "Medium Probability (Half Size)";
+      action = "allow";
+      positionSize = "half";
     } else {
       grade = EngineConfig.gradeC;
-      decision = "Low Probability (No Trade)";
+      action = "block";
+      positionSize = "none";
     }
 
     return TradeEvaluation(
-      rawScore: score,
+      rawScore: result.score,
       percentage: double.parse(percentage.toStringAsFixed(1)),
       grade: grade,
-      decision: decision,
+      action: action,
+      positionSize: positionSize,
       parameterSnapshots: snapshots,
+      isHardFilterTriggered: false,
     );
   }
 }

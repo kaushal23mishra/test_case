@@ -7,6 +7,7 @@ class IndicatorResult {
   final double currentVolume;
   final double averageVolume;
   final bool isHigherHighs;
+  final bool isLiquidityGrab;
 
   const IndicatorResult({
     required this.currentPrice,
@@ -16,17 +17,19 @@ class IndicatorResult {
     required this.currentVolume,
     required this.averageVolume,
     required this.isHigherHighs,
+    required this.isLiquidityGrab,
   });
 
   Map<String, dynamic> toJson() => {
-        'currentPrice': currentPrice,
-        'ema200': ema200,
-        'rsi14': rsi14,
-        'atr14': atr14,
-        'currentVolume': currentVolume,
-        'averageVolume': averageVolume,
-        'isHigherHighs': isHigherHighs,
-      };
+    'currentPrice': currentPrice,
+    'ema200': ema200,
+    'rsi14': rsi14,
+    'atr14': atr14,
+    'currentVolume': currentVolume,
+    'averageVolume': averageVolume,
+    'isHigherHighs': isHigherHighs,
+    'isLiquidityGrab': isLiquidityGrab,
+  };
 }
 
 /// Maps indicator analysis to trading parameter auto-detection decisions.

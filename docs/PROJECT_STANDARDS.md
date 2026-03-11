@@ -1,8 +1,8 @@
 # Project Standards
 
-**Version**: 1.5.0  
+**Version**: 1.6.0  
 **Status**: Active  
-**Last Updated**: 2026-02-24
+**Last Updated**: 2026-02-25
 
 ---
 
@@ -65,7 +65,7 @@ Imports must follow a **top-down** direction only:
     *   Use the centralized `log` instance from `core/utils/logger_utils.dart`.
     *   **Level INFO**: For final results, state transitions, or major user actions.
     *   **Level SEVERE**: For errors that stop a process.
-    *   **NO print()**: Use `log` or `debugPrint`. The analyzer will block `print`.
+    *   **NO print()/debugPrint()**: Use `log` from `logger_utils.dart`. Both `print` and `debugPrint` are blocked by quality gate tests to ensure structured logging.
 *   **Analyzer Configuration**:
     *   `strict-casts: true`: Prevents implicit downcasts from `dynamic`.
     *   `strict-inference: true`: Forces explicit types where inference might fail or be too broad.
@@ -78,6 +78,7 @@ Imports must follow a **top-down** direction only:
 *   Relative imports (`../`) are strictly prohibited.
 
 ### 2.4 Naming & Strings
+*   **Filenames**: All files in `lib/` must use **`snake_case`** naming convention.
 *   **No Hardcoded Labels**: Business logic labels (Grade A, etc.) must be defined in `core/config/engine_config.dart`.
 *   Naming: `UpperCamelCase` for Classes, `lowerCamelCase` for Variables/Functions.
 
@@ -90,28 +91,34 @@ Imports must follow a **top-down** direction only:
 *   Never silently swallow errors — always log or propagate.
 
 ### 3.2 Numeric Precision
-*   Use `double` for indicators. Never compare with `==`.
-*   Use `(a - b).abs() < kDoubleTolerance` defined in `core/constants/`.
+*   Use `double` for indicators. Never compare with `==` or `!=`.
+*   Use `(a - b).abs() < kDoubleTolerance` defined in `core/constants/`. Direct double comparison is blocked by quality gate tests.
 
 ---
 
-## 4. Trading Logic Standards (The Contract)
+## 4. Trading Standards & Engine Contract
 
-### 4.1 Deterministic Scoring
-*   All parameter weights and thresholds must reside in `lib/core/config/engine_config.dart`.
-*   **Dynamic Denominator**: The total possible score must be derived from the sum of weights, not hardcoded.
-*   **Serializable Core**: Engine evaluation results must be serializable (e.g., `toJson()`).
+### 4.1 Methodology vs. Implementation
+This project separates **Trading Strategy** from **Engine Implementation**:
+*   **Strategy**: Pure trading rules and philosophy live in 👉 **[docs/trading_standard.md](trading_standard.md)**.
+*   **Contract**: Technical implementation requirements for the scoring engine live here.
 
-### 4.2 Hard Filters
+### 4.2 Deterministic Scoring Engine
+*   **Centralized Config**: All weights and thresholds must reside in `lib/core/config/engine_config.dart`.
+*   **Dynamic Total**: The maximum possible score must be derived from the sum of weights, not hardcoded.
+*   **Heaviest Rule**: The `Top-Down Alignment` parameter must always carry the highest weight in the technicals list.
+*   **Serializable**: Engine evaluation results must be serializable (e.g., `toJson()`).
+
+### 4.3 Hard Filters
 *   Must be evaluated **before** scoring logic.
 *   **Short-Circuit**: A failed hard filter must stop calculation and skip normalization.
 
-### 4.3 Engine Versioning
+### 4.4 Engine Versioning
 Any change to weights or thresholds requires:
-1. Increment the project minor version (e.g., 1.2 → 1.3).
-2. Update `docs/CHANGELOG.md` with "ENGINE CHANGE" tag.
-3. Update boundary tests.
-4. **Enforcement**: PRs modifying logic without changelog updates must be rejected.
+1.  Increment the project minor version (e.g., 1.2 → 1.3).
+2.  Update `docs/CHANGELOG.md` with "ENGINE CHANGE" tag.
+3.  Update boundary tests in `test/unit/services/trading_logic/`.
+4.  **Enforcement**: PRs modifying logic without engine versioning updates must be rejected.
 
 ---
 
@@ -129,7 +136,7 @@ Any change to weights or thresholds requires:
 ### 6.1 Requirements
 *   Every public Service method must have Unit Tests.
 *   **Coverage**: Critical service logic must maintain **>80% coverage**.
-*   **Quality Gate**: Use `./test_agent.sh` for local validation before pushing.
+*   **Quality Gate**: Use `scripts/project_guardian.sh` for local validation or install it as a git hook.
 
 ---
 
@@ -146,6 +153,8 @@ Any change to weights or thresholds requires:
 ---
 
 ## 7. Git & Workflow
+
+### 7.1 Consistency
 *   **Conventional Commits**: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`.
 *   **PR Review**: Description must state if an "ENGINE CHANGE" is included.
 *   Reviewer Checklist: Verify dependency flow and sync-purity of services.
@@ -154,12 +163,19 @@ Any change to weights or thresholds requires:
 
 ## 8. Quality Gate Enforcement (Tooling)
 
-### 8.1 `./test_agent.sh`
-This script is the project's gatekeeper. It performs the following checks in order:
-1.  **Static Analysis**: Runs `flutter analyze --fatal-infos --fatal-warnings`.
-2.  **Audit**: Discovers all `*_test.dart` files and ensures they are accounted for.
-3.  **Test Run**: Executes the entire test suite (Unit, Widget, Global, Smoke).
-4.  **Integrity**: Blocks the process if any test file was skipped or failed.
-5.  **Silent on Success**: Success output MUST be concise. Individual test cases should NOT be listed unless they fail.
+### 8.1 `scripts/project_guardian.sh` (Supreme Gatekeeper)
+This script is the project's primary automated quality engine. It is both a manual validation tool and an automated git hook. It performs:
+1.  **Standards Analysis**: Verifies `docs/PROJECT_STANDARDS.md` and ensures `test/project_standards_test.dart` is in sync (Meta-Test).
+2.  **Static Analysis**: Runs `flutter analyze --fatal-infos --fatal-warnings`.
+3.  **Engineering Audit**: Verifies layered architecture, naming, and precision rules.
+4.  **Full Test Suite**: Executes all Unit/Widget tests.
+5.  **Silent on Success**: Success output is concise; individual test cases are NOT listed unless they fail (Section 8.1).
+6.  **Runtime Smoke Test**: Validates that the app starts and navigates without crashing via `test/smoke_test.dart`.
 
-**Mandatory Usage**: Every developer MUST run `./test_agent.sh` before pushing code.
+**Installation as Git Hook**:
+```bash
+cp scripts/project_guardian.sh .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+```
+
+**Mandatory Usage**: Every developer MUST ensure the Guardian passes locally before any push. Failure to fix violations is a breach of Engineering Standards.

@@ -60,7 +60,10 @@ class _SymbolSearchBarState extends State<SymbolSearchBar> {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
         ),
         onSubmitted: (_) => _submit(),
       ),

@@ -14,8 +14,10 @@ class TradingDashboard extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Trade Decision Framework',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        title: const Text(
+          'Trade Decision Framework',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
         backgroundColor: const Color(0xFF1E293B),
         elevation: 0,
         actions: [
@@ -39,7 +41,9 @@ class TradingDashboard extends ConsumerWidget {
             ...state.riskManagement.map((p) => _buildCheckItem(p, controller)),
             const SizedBox(height: 16),
             _buildSectionHeader('Market Conditions'),
-            ...state.marketConditions.map((p) => _buildCheckItem(p, controller)),
+            ...state.marketConditions.map(
+              (p) => _buildCheckItem(p, controller),
+            ),
           ],
         ),
       ),
@@ -47,13 +51,28 @@ class TradingDashboard extends ConsumerWidget {
   }
 
   Widget _buildScoreCard(TradingState state) {
+    final percentage = state.percentage;
     final score = state.totalScore;
-    final decision = state.decision;
-    
-    // Using Centralized Thresholds for Colors
-    final Color statusColor = score >= EngineConfig.gradeAThreshold
-        ? Colors.greenAccent
-        : (score >= EngineConfig.gradeBThreshold ? Colors.orangeAccent : Colors.redAccent);
+
+    // Using Percentage-Based Thresholds for Colors
+    final Color statusColor =
+        percentage >= EngineConfig.gradeAPercentThreshold
+            ? Colors.greenAccent
+            : (percentage >= EngineConfig.gradeBPercentThreshold
+                ? Colors.orangeAccent
+                : Colors.redAccent);
+
+    String displayMessage;
+    if (state.isHardFilterTriggered) {
+      displayMessage = 'BLOCKED: ${state.hardFilterReason ?? "Hard Filter"}';
+    } else {
+      final action = state.action[0].toUpperCase() + state.action.substring(1);
+      final size =
+          state.positionSize == 'none'
+              ? ''
+              : ' (${state.positionSize[0].toUpperCase()}${state.positionSize.substring(1)} Size)';
+      displayMessage = '$action$size';
+    }
 
     return Container(
       width: double.infinity,
@@ -62,7 +81,7 @@ class TradingDashboard extends ConsumerWidget {
         gradient: LinearGradient(
           colors: [
             const Color(0xFF1E293B),
-            const Color(0xFF334155).withValues(alpha: 0.8)
+            const Color(0xFF334155).withValues(alpha: 0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -74,26 +93,38 @@ class TradingDashboard extends ConsumerWidget {
             color: statusColor.withValues(alpha: 0.1),
             blurRadius: 20,
             spreadRadius: 5,
-          )
+          ),
         ],
       ),
       child: Column(
         children: [
-          const Text('CURRENT TRADE SCORE',
-              style: TextStyle(
-                  color: Colors.white70, fontSize: 12, letterSpacing: 1.5)),
+          const Text(
+            'CURRENT TRADE SCORE',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              letterSpacing: 1.5,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text('$score / ${EngineConfig.totalPossibleScore}',
-              style: TextStyle(
-                  color: statusColor,
-                  fontSize: 42,
-                  fontWeight: FontWeight.bold)),
+          Text(
+            '$score / ${EngineConfig.totalPossibleScore}',
+            style: TextStyle(
+              color: statusColor,
+              fontSize: 42,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(decision,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500)),
+          Text(
+            displayMessage,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -102,15 +133,21 @@ class TradingDashboard extends ConsumerWidget {
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Text(title,
-          style: const TextStyle(
-              color: Colors.blueAccent,
-              fontSize: 16,
-              fontWeight: FontWeight.bold)),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.blueAccent,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
-  Widget _buildCheckItem(TradingParameter parameter, TradingController controller) {
+  Widget _buildCheckItem(
+    TradingParameter parameter,
+    TradingController controller,
+  ) {
     return Card(
       color: const Color(0xFF1E293B),
       key: ValueKey(parameter.title),
@@ -120,9 +157,13 @@ class TradingDashboard extends ConsumerWidget {
         title: Row(
           children: [
             Flexible(
-              child: Text(parameter.title,
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w600)),
+              child: Text(
+                parameter.title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             if (parameter.isAutoDetected) ...[
               const SizedBox(width: 8),
@@ -132,18 +173,23 @@ class TradingDashboard extends ConsumerWidget {
                   color: Colors.blueAccent.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text('AUTO',
-                    style: TextStyle(
-                        color: Colors.blueAccent,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5)),
+                child: const Text(
+                  'AUTO',
+                  style: TextStyle(
+                    color: Colors.blueAccent,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
             ],
           ],
         ),
-        subtitle: Text(parameter.description,
-            style: const TextStyle(color: Colors.white54, fontSize: 12)),
+        subtitle: Text(
+          parameter.description,
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
+        ),
         value: parameter.isChecked,
         activeColor: Colors.blueAccent,
         onChanged: (bool? value) {
@@ -151,8 +197,10 @@ class TradingDashboard extends ConsumerWidget {
         },
         secondary: CircleAvatar(
           backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
-          child: Text('${parameter.weight}',
-              style: const TextStyle(color: Colors.blueAccent, fontSize: 12)),
+          child: Text(
+            '${parameter.weight}',
+            style: const TextStyle(color: Colors.blueAccent, fontSize: 12),
+          ),
         ),
       ),
     );

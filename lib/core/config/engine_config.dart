@@ -9,24 +9,29 @@ class EngineConfig {
   static const int positionSizingWeight = 2;
   static const int volatilityAtrWeight = 1;
   static const int newsIntegrityWeight = 1;
+  static const int liquidityTrapWeight = 3; // High weight for trap avoidance
+  static const int topDownAlignmentWeight = 4; // Highest weight: all 3 timeframes must align
 
   // Derived denominator
-  static const int totalPossibleScore = trendAlignmentWeight +
+  static const int totalPossibleScore =
+      trendAlignmentWeight +
       supportResistanceWeight +
       volumeConfirmationWeight +
       riskRewardWeight +
       positionSizingWeight +
       volatilityAtrWeight +
-      newsIntegrityWeight;
+      newsIntegrityWeight +
+      liquidityTrapWeight +
+      topDownAlignmentWeight;
 
-  // Grade Thresholds (Points)
-  static const int gradeAThreshold = 12;
-  static const int gradeBThreshold = 8;
-  
-  // Grade Names
-  static const String gradeA = "Grade A";
-  static const String gradeB = "Grade B";
-  static const String gradeC = "Grade C";
+  // Grade Thresholds (Percentages)
+  static const double gradeAPercentThreshold = 85.0;
+  static const double gradeBPercentThreshold = 55.0;
+
+  // Grade Codes (Machine-Friendly)
+  static const String gradeA = "A";
+  static const String gradeB = "B";
+  static const String gradeC = "C";
 
   // --- Indicator Calculation Periods ---
   static const int emaPeriod = 200;

@@ -28,8 +28,10 @@ class MarketDataRepository {
 
   MarketDataRepository({required http.Client client}) : _client = client;
 
-  Future<MarketDataResult> fetchOHLCV(String symbol,
-      {String timeframe = 'daily'}) async {
+  Future<MarketDataResult> fetchOHLCV(
+    String symbol, {
+    String timeframe = 'daily',
+  }) async {
     final cacheKey = '$symbol:$timeframe';
     final cached = _cache[cacheKey];
     if (cached != null && !cached.isExpired) {
@@ -58,7 +60,8 @@ class MarketDataRepository {
 
       if (json.containsKey('Note')) {
         return const MarketDataError(
-            'API rate limit reached. Please try again later.');
+          'API rate limit reached. Please try again later.',
+        );
       }
 
       final timeSeries = json['Time Series (Daily)'] as Map<String, dynamic>?;
@@ -66,24 +69,29 @@ class MarketDataRepository {
         return const MarketDataError('No data returned for this symbol.');
       }
 
-      final bars = timeSeries.entries.map((e) {
-        final values = e.value as Map<String, dynamic>;
-        return OhlcvBar(
-          timestamp: DateTime.parse(e.key),
-          open: double.parse(values['1. open'] as String),
-          high: double.parse(values['2. high'] as String),
-          low: double.parse(values['3. low'] as String),
-          close: double.parse(values['4. close'] as String),
-          volume: double.parse(values['5. volume'] as String),
-        );
-      }).toList()
-        ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      final bars =
+          timeSeries.entries.map((e) {
+              final values = e.value as Map<String, dynamic>;
+              return OhlcvBar(
+                timestamp: DateTime.parse(e.key),
+                open: double.parse(values['1. open'] as String),
+                high: double.parse(values['2. high'] as String),
+                low: double.parse(values['3. low'] as String),
+                close: double.parse(values['4. close'] as String),
+                volume: double.parse(values['5. volume'] as String),
+              );
+            }).toList()
+            ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
       // Keep only the most recent 300 bars (enough for 200 EMA + buffer)
-      final trimmed = bars.length > 300 ? bars.sublist(bars.length - 300) : bars;
+      final trimmed =
+          bars.length > 300 ? bars.sublist(bars.length - 300) : bars;
 
-      final data =
-          MarketData(symbol: symbol, timeframe: timeframe, bars: trimmed);
+      final data = MarketData(
+        symbol: symbol,
+        timeframe: timeframe,
+        bars: trimmed,
+      );
       _cache[cacheKey] = _CacheEntry(data: data, fetchedAt: DateTime.now());
 
       return MarketDataSuccess(data);
@@ -106,5 +114,6 @@ class _CacheEntry {
   _CacheEntry({required this.data, required this.fetchedAt});
 
   bool get isExpired =>
-      DateTime.now().difference(fetchedAt) > MarketDataRepository._cacheDuration;
+      DateTime.now().difference(fetchedAt) >
+      MarketDataRepository._cacheDuration;
 }
